@@ -4,7 +4,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeLink, setActiveLink] = useState('Discover');
-  const searchRef = useRef(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const navLinks = ['Discover', 'TV Shows', 'Movies', 'Anime Hub', 'Arcade', 'Trending', 'My Watchlist', 'Coming Soon'];
 
