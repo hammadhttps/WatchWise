@@ -1,6 +1,7 @@
 import HeroSection from '../components/HeroSection'
 import heroImageUrl from '../assets/heroImage.jpg'
 import CardList from '../components/CardList'
+import Footer from '../components/Footer'
 
 const HomePage = () => {
   return (
@@ -9,6 +10,7 @@ const HomePage = () => {
         <CardList/>
         <CardList/>
         <CardList/>
+        <Footer/>
     </div>
   )
 }
