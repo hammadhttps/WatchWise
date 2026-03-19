@@ -1,23 +1,25 @@
-import {ArrowRight} from 'lucide-react';
+
 import MovieCard from './MovieCard';
 import { useUpcomingMovies } from '../hooks/useUpcomingMovies';
 
-const CardList = () => {
-  const { movies, page, totalPages, setPage } = useUpcomingMovies();
+
+interface CardListProps {
+  title: string;
+  Category1: string;
+}
+const CardList = ({ title, Category1 }: CardListProps) => {
+  const { movies, page, totalPages, setPage } = useUpcomingMovies(Category1);
   return (
     <section className="px-[4%] py-12 bg-[#0d1b3e]">
       <div className="flex items-end justify-between mb-7">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="w-6 h-[2px] bg-[#6ea8fe] rounded-full" />
-            <span className="text-[11px] font-semibold tracking-[2px] uppercase text-[#6ea8fe]">Coming Soon</span>
+            <span className="text-[11px] font-semibold tracking-[2px] uppercase text-[#6ea8fe]">{title}</span>
           </div>
-          <h2 className="text-[26px] font-bold text-white tracking-[-0.3px] leading-[1.1]">Upcoming Movies</h2>
+          <h2 className="text-[26px] font-bold text-white tracking-[-0.3px] leading-[1.1]">{Category1}</h2>
         </div>
-        <button className="flex items-center gap-1.5 text-[13px] font-semibold text-[#6ea8fe] bg-transparent border-none cursor-pointer hover:gap-2.5 transition-all pb-1 group">
-          See All
-          <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-        </button>
+       
       </div>
       <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         {movies.map(movie => (

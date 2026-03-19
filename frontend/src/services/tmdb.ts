@@ -6,9 +6,9 @@ const TOKEN = import.meta.env.VITE_TMDB_API_TOKEN;
 
 
 export const getUpcomingMovies = async (
-    page:number
+    page:number,category:string
 ):Promise<UpcomingMoviesResponse> => {
-  const response = await fetch(`${API_URL}/movie/upcoming?language=en-US&page=${page}`, {
+  const response = await fetch(`${API_URL}/movie/${category}?language=en-US&page=${page}`, {
     method: "GET",
     headers: {
       accept: "application/json",
