@@ -1,5 +1,5 @@
 import { Play, Video, Heart, Bookmark, Share2, ArrowLeft } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useMovieDetail } from '../hooks/useMovieDetail';
 import MovieHero from '../components/movie/MovieHero';
@@ -143,6 +143,7 @@ const SingleMoviePage = () => {
                 <div className="grid grid-cols-3 gap-4">
                   {similar.slice(0, 6).map(m => (
                     <div key={m.id} className="cursor-pointer group">
+                      <Link to={`/movie/${m.id}`}>
                       <div className="aspect-[2/3] rounded-lg mb-2 overflow-hidden bg-gradient-to-br from-[#1a3a6e] via-[#0e2247] to-[#091630]">
                         {m.poster_path ? (
                           <img
@@ -158,6 +159,7 @@ const SingleMoviePage = () => {
                       </div>
                       <p className="text-[12px] font-semibold text-white/75 leading-[1.3] line-clamp-1">{m.title}</p>
                       <p className="text-[11px] text-white/35">{m.release_date?.split('-')[0]}</p>
+                      </Link>
                     </div>
                   ))}
                 </div>

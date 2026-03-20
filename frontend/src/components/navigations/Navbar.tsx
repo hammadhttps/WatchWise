@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -75,7 +76,9 @@ const Navbar = () => {
             </button>
 
              <button className="hidden sm:flex items-center gap-1.5 bg-[#213C51] border border-white/25 text-white text-[14.5px] font-bold px-3.5 py-1.5 rounded-md cursor-pointer whitespace-nowrap hover:bg-white/20 hover:border-white/40 transition-all">
+              <Link to="/sign">
               <span>Sign In</span>
+              </Link>
             </button>
 
            

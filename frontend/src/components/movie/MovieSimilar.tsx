@@ -1,5 +1,6 @@
 import { Play } from 'lucide-react';
 import type { Movie } from '../../types/movieDetails';
+import { Link } from 'react-router-dom';
 
 interface MovieSimilarProps {
   movies: Movie[];
@@ -23,6 +24,7 @@ const MovieSimilar = ({ movies }: MovieSimilarProps) => {
       <div className="grid grid-cols-3 gap-3">
         {movies.slice(0, 3).map(m => (
           <div key={m.id} className="cursor-pointer group">
+            <Link to={`/movie/${m.id}`}>
             <div
               className="aspect-[2/3] rounded-lg mb-1.5 flex items-center justify-center overflow-hidden group-hover:-translate-y-0.5 transition-transform"
               style={{ background: 'linear-gradient(135deg,#1a3a6e,#091630)' }}
@@ -39,6 +41,7 @@ const MovieSimilar = ({ movies }: MovieSimilarProps) => {
             </div>
             <p className="text-[12px] font-semibold text-white/75 leading-[1.3] line-clamp-1">{m.title}</p>
             <p className="text-[11px] text-white/35">{m.release_date?.split('-')[0]}</p>
+            </Link>
           </div>
         ))}
       </div>
