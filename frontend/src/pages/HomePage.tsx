@@ -1,6 +1,6 @@
 import HeroSection from '../components/HeroSection'
 import CardList from '../components/CardList'
-import Footer from '../components/Footer'
+import Footer from '../components/navigations/Footer'
 import { useUpcomingMovies } from '../hooks/useUpcomingMovies'
 
 const HomePage = () => {
@@ -17,7 +17,7 @@ const HomePage = () => {
           rating={heroMovie?.vote_average?.toFixed(1)}
           year={heroMovie?.release_date?.split('-')[0]}
         />
-        <CardList title="Coming Soon" Category1="Upcoming Movies"/>
+        <CardList title="Coming Soon" Category1="upcoming"/>
         
         <Footer/>
     </div>

@@ -1,6 +1,7 @@
 
-import MovieCard from './MovieCard';
+import MovieCard from './movie/MovieCard';
 import { useUpcomingMovies } from '../hooks/useUpcomingMovies';
+import { Link } from 'react-router-dom';
 
 
 interface CardListProps {
@@ -8,6 +9,7 @@ interface CardListProps {
   Category1: string;
 }
 const CardList = ({ title, Category1 }: CardListProps) => {
+  
   const { movies, page, totalPages, setPage } = useUpcomingMovies(Category1);
   return (
     <section className="px-[4%] py-12 bg-[#0d1b3e]">
@@ -23,7 +25,9 @@ const CardList = ({ title, Category1 }: CardListProps) => {
       </div>
       <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         {movies.map(movie => (
+          <Link to={`/movie/${movie.id}`}>
           <MovieCard key={movie.id} movie={movie} />
+          </Link>
         ))}
       </div>
       <div className="flex items-center justify-center gap-4 mt-8">
