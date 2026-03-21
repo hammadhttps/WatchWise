@@ -63,7 +63,7 @@ const Footer = () => {
           {[
             { title: 'Discover', links: discoverLinks },
             { title: 'Account',  links: accountLinks  },
-            { title: 'Company',  links: companyLinks  },
+            
           ].map(({ title, links }) => (
             <div key={title}>
               <p className="text-[11px] font-bold tracking-[1.8px] uppercase text-[#6ea8fe] mb-[18px]">{title}</p>
