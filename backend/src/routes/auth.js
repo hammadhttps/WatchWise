@@ -86,6 +86,7 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password, remember } = req.body;
+    console.log(req.body);
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
@@ -93,11 +94,13 @@ router.post('/login', async (req, res) => {
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
+      console.log("email not found");
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.log("password not matched");
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
