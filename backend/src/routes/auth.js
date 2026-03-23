@@ -35,6 +35,7 @@ const clearCookie = (res) => {
 router.post('/signup', async (req, res) => {
   try {
     const { firstName, lastName, email, password, securityQuestions } = req.body;
+   // console.log(req.body);
 
     if (!firstName || !lastName || !email || !password || !securityQuestions) {
       return res.status(400).json({ message: 'All fields are required' });
@@ -77,6 +78,7 @@ router.post('/signup', async (req, res) => {
     if (error.name === 'ValidationError') {
       return res.status(400).json({ message: error.message });
     }
+    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -111,6 +113,7 @@ router.post('/login', async (req, res) => {
 
     res.json({ user: userResponse });
   } catch (error) {
+    console.log("This is the error");
     res.status(500).json({ message: 'Server error' });
   }
 });
