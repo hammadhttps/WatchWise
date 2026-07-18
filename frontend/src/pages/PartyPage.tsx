@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { io, Socket } from 'socket.io-client';
 import { Users, Send, LinkIcon, Check, ArrowLeft, PartyPopper, Film } from 'lucide-react';
-import { partyAPI } from '../services/api';
+import { partyAPI, API_BASE_URL } from '../services/api';
 import useAuth from '../hooks/useAuth';
 
 interface ChatMessage {
@@ -43,7 +43,7 @@ const PartyPage = () => {
   useEffect(() => {
     if (!user || !party || !id) return;
 
-    const socket = io('/', { withCredentials: true });
+    const socket = io(API_BASE_URL || '/', { withCredentials: true });
     socketRef.current = socket;
 
     socket.on('connect', () => socket.emit('party:join', { roomId: id }));

@@ -14,26 +14,26 @@ const generateResetToken = (userId) => {
   return jwt.sign({ userId, purpose: 'password-reset' }, process.env.JWT_SECRET, { expiresIn: '10m' });
 };
 
+const isProd = process.env.NODE_ENV === 'production';
+// Frontend (Vercel) and backend (Render) are different sites, so the
+// session cookie needs SameSite=None to be sent cross-origin; that
+// requires Secure, which is only valid over HTTPS (i.e. production).
+const cookieOptions = {
+  httpOnly: true,
+  sameSite: isProd ? 'none' : 'lax',
+  secure: isProd
+};
+
 const setCookie = (res, token, remember = false) => {
-  const maxAge = remember 
-    ? 7 * 24 * 60 * 60 * 1000 
+  const maxAge = remember
+    ? 7 * 24 * 60 * 60 * 1000
     : 24 * 60 * 60 * 1000;
 
-  res.cookie('token', token, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge
-  });
+  res.cookie('token', token, { ...cookieOptions, maxAge });
 };
 
 const clearCookie = (res) => {
-  res.cookie('token', '', {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 0
-  });
+  res.cookie('token', '', { ...cookieOptions, maxAge: 0 });
 };
 
 router.post('/signup', async (req, res) => {
@@ -231,12 +231,7 @@ router.post('/verify-questions', async (req, res) => {
       });
 
       const resetToken = generateResetToken(user._id);
-      res.cookie('resetToken', resetToken, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 10 * 60 * 1000
-      });
+      res.cookie('resetToken', resetToken, { ...cookieOptions, maxAge: 10 * 60 * 1000 });
 
       return res.json({
         verified: true,
@@ -313,12 +308,7 @@ router.post('/reset-password', async (req, res) => {
     user.resetLockUntil = null;
     await user.save();
 
-    res.cookie('resetToken', '', {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 0
-    });
+    res.cookie('resetToken', '', { ...cookieOptions, maxAge: 0 });
 
     res.json({ message: 'Password reset successfully' });
   } catch (error) {
