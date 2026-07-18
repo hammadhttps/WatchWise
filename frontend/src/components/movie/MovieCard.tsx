@@ -1,4 +1,9 @@
-import { Bell, Play, Star, Film } from 'lucide-react';
+import { Bell, Play, Star, Film, Heart, Bookmark } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import useAuth from '../../hooks/useAuth';
+import useLikes from '../../hooks/useLikes';
+import useWatchlist from '../../hooks/useWatchlist';
+import { genreNames } from '../../services/tmdb';
 
 
 interface MovieCardProps {
@@ -9,17 +14,51 @@ interface MovieCardProps {
     poster_path: string;
     vote_average: number;
     release_date: string;
+    genre_ids?: number[];
   };
+  badge?: string;
 }
-const MovieCard = ({ movie }: MovieCardProps) => {
-  const badge = 'soon';
+const MovieCard = ({ movie, badge = 'Coming Soon' }: MovieCardProps) => {
+  const { user } = useAuth();
+  const { isLiked, toggleLike } = useLikes();
+  const { isInWatchlist, toggleWatchlist } = useWatchlist();
+  const navigate = useNavigate();
+
+  const liked = isLiked(movie.id);
+  const inWatchlist = isInWatchlist(movie.id);
+
+  const movePayload = () => ({
+    tmdbId: movie.id,
+    title: movie.title,
+    posterPath: movie.poster_path,
+    genres: genreNames(movie.genre_ids),
+    year: Number(movie.release_date?.split('-')[0]) || null
+  });
+
+  const handleLike = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      navigate('/sign');
+      return;
+    }
+
+    toggleLike(movePayload());
+  };
+
+  const handleWatchlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      navigate('/sign');
+      return;
+    }
+
+    toggleWatchlist(movePayload());
+  };
   
-  const badgeStyles: Record<string, string> = {
-    soon: 'bg-[#134686]/90 text-[#6ea8fe] border border-[#6ea8fe]/30',
-  };
-  const badgeLabel: Record<string, string> = {
-    soon: 'Coming Soon',
-  };
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -44,9 +83,41 @@ const MovieCard = ({ movie }: MovieCardProps) => {
             </div>
           </div>
         )}
-        <span className={`absolute top-2.5 left-2.5 text-[10px] font-bold tracking-[0.8px] uppercase px-2 py-[3px] rounded-[4px] ${badgeStyles[badge]}`}>
-          {badgeLabel[badge]}
+        <span className="absolute top-2.5 left-2.5 text-[10px] font-bold tracking-[0.8px] uppercase px-2 py-[3px] rounded-[4px] bg-[#134686]/90 text-[#6ea8fe] border border-[#6ea8fe]/30">
+          {badge}
         </span>
+        <div className="absolute top-2.5 right-2.5 z-10 flex flex-col gap-1.5">
+          <button
+            onClick={handleLike}
+            title={liked ? 'Remove from likes' : 'Like — improves your AI matches'}
+            className={`w-8 h-8 rounded-full flex items-center justify-center border backdrop-blur-sm transition-all duration-200 cursor-pointer active:scale-90 ${
+              liked
+                ? 'bg-red-500/25 border-red-400/50 opacity-100'
+                : 'bg-black/40 border-white/15 opacity-0 group-hover:opacity-100 hover:border-white/40'
+            }`}
+          >
+            <Heart
+              size={15}
+              className={liked ? 'text-red-400' : 'text-white/80'}
+              fill={liked ? '#f87171' : 'none'}
+            />
+          </button>
+          <button
+            onClick={handleWatchlist}
+            title={inWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+            className={`w-8 h-8 rounded-full flex items-center justify-center border backdrop-blur-sm transition-all duration-200 cursor-pointer active:scale-90 ${
+              inWatchlist
+                ? 'bg-[#6ea8fe]/25 border-[#6ea8fe]/50 opacity-100'
+                : 'bg-black/40 border-white/15 opacity-0 group-hover:opacity-100 hover:border-white/40'
+            }`}
+          >
+            <Bookmark
+              size={15}
+              className={inWatchlist ? 'text-[#6ea8fe]' : 'text-white/80'}
+              fill={inWatchlist ? '#6ea8fe' : 'none'}
+            />
+          </button>
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-[#0d1b3e] via-[#0d1b3e]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
           <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center scale-90 group-hover:scale-100 transition-transform duration-200">
             <Play size={18} fill="#134686" stroke="none" />

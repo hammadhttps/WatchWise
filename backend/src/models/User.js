@@ -12,6 +12,82 @@ const securityQuestionSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
+const likedMovieSchema = new mongoose.Schema({
+  tmdbId: {
+    type: Number,
+    required: true
+  },
+  title: {
+    type: String,
+    required: true
+  },
+  posterPath: {
+    type: String,
+    default: null
+  },
+  genres: {
+    type: [String],
+    default: []
+  },
+  year: {
+    type: Number,
+    default: null
+  },
+  likedAt: {
+    type: Date,
+    default: Date.now
+  }
+}, { _id: false });
+
+const watchlistMovieSchema = new mongoose.Schema({
+  tmdbId: {
+    type: Number,
+    required: true
+  },
+  title: {
+    type: String,
+    required: true
+  },
+  posterPath: {
+    type: String,
+    default: null
+  },
+  genres: {
+    type: [String],
+    default: []
+  },
+  year: {
+    type: Number,
+    default: null
+  },
+  addedAt: {
+    type: Date,
+    default: Date.now
+  }
+}, { _id: false });
+
+const recommendationHistorySchema = new mongoose.Schema({
+  preferences: {
+    mood: { type: String, default: '' },
+    company: { type: String, default: '' },
+    era: { type: String, default: '' },
+    genres: { type: [String], default: [] },
+    note: { type: String, default: '' }
+  },
+  recommendations: [{
+    _id: false,
+    title: { type: String, required: true },
+    year: { type: Number, default: null },
+    matchScore: { type: Number, default: 0 },
+    reason: { type: String, default: '' },
+    genres: { type: [String], default: [] }
+  }],
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
 const userSchema = new mongoose.Schema({
   firstName: {
     type: String,
@@ -37,13 +113,25 @@ const userSchema = new mongoose.Schema({
   },
   securityQuestions: {
     type: [securityQuestionSchema],
-    required: [true, 'Security questions are required'],
+    default: [],
     validate: {
       validator: function(v) {
-        return v && v.length === 3;
+        return !v || v.length === 0 || v.length === 3;
       },
-      message: 'Exactly 3 security questions are required'
+      message: 'Security questions are optional, but if provided there must be exactly 3'
     }
+  },
+  likedMovies: {
+    type: [likedMovieSchema],
+    default: []
+  },
+  watchlist: {
+    type: [watchlistMovieSchema],
+    default: []
+  },
+  recommendationHistory: {
+    type: [recommendationHistorySchema],
+    default: []
   },
   resetAttempts: {
     type: Number,
@@ -57,16 +145,16 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return ;
-  
+userSchema.pre('save', async function() {
+  if (!this.isModified('password')) return;
+
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('securityQuestions')) return next();
-  
+userSchema.pre('save', async function() {
+  if (!this.isModified('securityQuestions')) return;
+
   const salt = await bcrypt.genSalt(12);
   for (let i = 0; i < this.securityQuestions.length; i++) {
     if (this.securityQuestions[i].answer) {
@@ -76,7 +164,6 @@ userSchema.pre('save', async function(next) {
       );
     }
   }
-  
 });
 
 userSchema.methods.comparePassword = async function(candidatePassword) {
