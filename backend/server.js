@@ -20,10 +20,10 @@ dotenv.config();
 const app = express();
 
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.FRONTEND_URL].filter(Boolean)
+  ? [process.env.FRONTEND_URL || 'https://watch-wise-dun.vercel.app'].filter(Boolean)
   : ['http://localhost:5173', 'http://127.0.0.1:5173'];
 
-const corsOrigins = allowedOrigins.includes('*') ? [] : allowedOrigins;
+const corsOrigins = allowedOrigins.includes('*') ? allowedOrigins[0] : allowedOrigins;
 
 app.use(cors({
   origin: corsOrigins,
@@ -51,7 +51,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: corsOrigins,
+    origin: corsOrigins === '*' ? allowedOrigins[0] : corsOrigins,
     credentials: true
   }
 });
