@@ -19,9 +19,11 @@ dotenv.config();
 
 const app = express();
 
-const corsOrigins = process.env.NODE_ENV === 'production'
-  ? process.env.FRONTEND_URL
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [process.env.FRONTEND_URL].filter(Boolean)
   : ['http://localhost:5173', 'http://127.0.0.1:5173'];
+
+const corsOrigins = allowedOrigins.includes('*') ? [] : allowedOrigins;
 
 app.use(cors({
   origin: corsOrigins,
