@@ -1,14 +1,21 @@
-import { Play, Video, Heart, Bookmark, Share2, ArrowLeft } from 'lucide-react';
+import { Play, Video, Heart, Bookmark, Share2, ArrowLeft, Quote, Users, Loader2 } from 'lucide-react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMovieDetail } from '../hooks/useMovieDetail';
 import MovieHero from '../components/movie/MovieHero';
 import MovieScore from '../components/movie/MovieScore';
 import MovieDetailsSidebar from '../components/movie/MovieDetailsSidebar';
 import MovieStreaming from '../components/movie/MovieStreaming';
 import MovieReviews from '../components/movie/MovieReviews';
+import CommunityReviews from '../components/movie/CommunityReviews';
 import MovieMedia from '../components/movie/MovieMedia';
 import MovieSimilar from '../components/movie/MovieSimilar';
+import TrailerModal from '../components/movie/TrailerModal';
+import { quoteAPI, partyAPI } from '../services/api';
+import type { Video as MovieVideo } from '../types/movieDetails';
+import useAuth from '../hooks/useAuth';
+import useLikes from '../hooks/useLikes';
+import useWatchlist from '../hooks/useWatchlist';
 
 const LoadingSkeleton = () => (
   <div className="bg-[#0d1b3e] min-h-screen text-white font-sans">
@@ -38,17 +45,103 @@ const SingleMoviePage = () => {
   const navigate = useNavigate();
   const { data, loading } = useMovieDetail(Number(id));
 
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const { user } = useAuth();
+  const { isLiked, toggleLike } = useLikes();
+  const { isInWatchlist, toggleWatchlist } = useWatchlist();
   const [activeTab, setActiveTab] = useState('Reviews');
+  const [selectedTrailer, setSelectedTrailer] = useState<MovieVideo | null>(null);
+  const [movieQuote, setMovieQuote] = useState<{ text?: string; author?: string | null; show?: string | null } | null>(null);
   const tabs = ['Reviews', 'Media', 'Related'];
 
+  const { details, reviews, images, videos, similar, providers } = data || {
+    details: {
+      id: 0,
+      title: '',
+      poster_path: '',
+      backdrop_path: '',
+      release_date: '',
+      vote_average: 0,
+      overview: '',
+      runtime: 0,
+      genres: [],
+      tagline: '',
+      homepage: '',
+      status: '',
+      vote_count: 0,
+      original_language: '',
+      budget: 0,
+      revenue: 0,
+      production_companies: [],
+    },
+    reviews: [],
+    images: { id: 0, backdrops: [], posters: [], logos: [] },
+    videos: [],
+    similar: [],
+    providers: null,
+  };
+
+  const liked = isLiked(details.id);
+  const saved = isInWatchlist(details.id);
+
+  const handleCollect = (action: 'like' | 'save') => {
+    if (!details.id) return;
+    if (!user) {
+      navigate('/sign');
+      return;
+    }
+    const payload = {
+      tmdbId: details.id,
+      title: details.title,
+      posterPath: details.poster_path,
+      genres: details.genres?.map(g => g.name) ?? [],
+      year: Number(details.release_date?.split('-')[0]) || null
+    };
+    if (action === 'like') toggleLike(payload);
+    else toggleWatchlist(payload);
+  };
+
+  const [creatingParty, setCreatingParty] = useState(false);
+
+  const handleStartParty = async () => {
+    if (!details.id) return;
+    if (!user) {
+      navigate('/sign');
+      return;
+    }
+    setCreatingParty(true);
+    try {
+      const { party } = await partyAPI.createParty({
+        movieId: details.id,
+        movieTitle: details.title,
+        posterPath: details.poster_path,
+        backdropPath: details.backdrop_path
+      });
+      navigate(`/party/${party.id}`);
+    } catch {
+      setCreatingParty(false);
+    }
+  };
+
+  useEffect(() => {
+    const loadQuote = async () => {
+      try {
+        const response = await quoteAPI.getQuote(details.title);
+        if (response?.quote) {
+          setMovieQuote(response.quote);
+        }
+      } catch (error) {
+        console.error('Failed to load movie quote', error);
+      }
+    };
+
+    if (!details?.title) return;
+    loadQuote();
+  }, [details?.title]);
+  
   if (loading || !data) {
     return <LoadingSkeleton />;
   }
 
-  const { details, reviews, images, videos, similar, providers } = data;
-  
   const backdropUrl = images.backdrops?.[0]?.file_path
     ? `https://image.tmdb.org/t/p/original${images.backdrops[0].file_path}`
     : null;
@@ -83,12 +176,26 @@ const SingleMoviePage = () => {
           <button className="flex items-center gap-2 bg-white text-[#134686] border-none px-7 py-3 text-[15px] font-bold rounded-lg cursor-pointer hover:bg-[#ddeaff] active:scale-[.98] transition-all">
             <Play size={17} fill="#134686" stroke="none" /> Watch Now
           </button>
-          <button className="flex items-center gap-2 bg-white/10 text-white border border-white/22 px-6 py-[11px] text-[15px] font-semibold rounded-lg cursor-pointer hover:bg-white/18 transition-all">
+          <button
+            onClick={() => {
+              const trailer = videos.find((video: MovieVideo) => video.site === 'YouTube' && video.type === 'Trailer');
+              setSelectedTrailer(trailer || null);
+            }}
+            className="flex items-center gap-2 bg-white/10 text-white border border-white/22 px-6 py-[11px] text-[15px] font-semibold rounded-lg cursor-pointer hover:bg-white/18 transition-all"
+          >
             <Video size={17} /> Watch Trailer
           </button>
+          <button
+            onClick={handleStartParty}
+            disabled={creatingParty}
+            className="flex items-center gap-2 bg-[#6ea8fe]/15 text-[#6ea8fe] border border-[#6ea8fe]/35 px-6 py-[11px] text-[15px] font-semibold rounded-lg cursor-pointer hover:bg-[#6ea8fe]/25 transition-all disabled:opacity-60"
+          >
+            {creatingParty ? <Loader2 size={17} className="animate-spin" /> : <Users size={17} />}
+            Watch Party
+          </button>
           {[
-            { Icon: Heart, active: liked, toggle: () => setLiked(!liked), activeClass: 'bg-red-500/15 border-red-400/35 text-red-400', fill: liked },
-            { Icon: Bookmark, active: saved, toggle: () => setSaved(!saved), activeClass: 'bg-[#6ea8fe]/15 border-[#6ea8fe]/35 text-[#6ea8fe]', fill: saved },
+            { Icon: Heart, active: liked, toggle: () => handleCollect('like'), activeClass: 'bg-red-500/15 border-red-400/35 text-red-400', fill: liked },
+            { Icon: Bookmark, active: saved, toggle: () => handleCollect('save'), activeClass: 'bg-[#6ea8fe]/15 border-[#6ea8fe]/35 text-[#6ea8fe]', fill: saved },
             { Icon: Share2, active: false, toggle: () => {}, activeClass: '', fill: false },
           ].map(({ Icon, active, toggle, activeClass, fill }, i) => (
             <button
@@ -118,6 +225,20 @@ const SingleMoviePage = () => {
               {details.overview || 'No synopsis available.'}
             </p>
 
+            {movieQuote?.text && (
+              <div className="mb-6 rounded-2xl border border-[#6ea8fe]/20 bg-[#6ea8fe]/10 p-4">
+                <div className="mb-2 flex items-center gap-2 text-[#6ea8fe]">
+                  <Quote size={16} />
+                  <span className="text-[11px] font-bold uppercase tracking-[2px]">Movie Quote</span>
+                </div>
+                <p className="text-[15px] leading-[1.7] text-white/80">“{movieQuote.text}”</p>
+                {movieQuote.author && (
+                  <p className="mt-2 text-[12px] text-white/45">— {movieQuote.author}</p>
+                )}
+              </div>
+            )}
+
+
             {/* Tabs */}
             <div className="flex gap-1 border-b border-white/[0.08] mb-5">
               {tabs.map(t => (
@@ -136,8 +257,18 @@ const SingleMoviePage = () => {
             </div>
 
             {/* Tab Content */}
-            {activeTab === 'Reviews' && <MovieReviews reviews={reviews} />}
-            {activeTab === 'Media' && <MovieMedia videos={videos} />}
+            {activeTab === 'Reviews' && (
+              <>
+                <CommunityReviews
+                  movieId={details.id}
+                  movieTitle={details.title}
+                  criticScore={details.vote_average}
+                  criticCount={details.vote_count}
+                />
+                <MovieReviews reviews={reviews} />
+              </>
+            )}
+            {activeTab === 'Media' && <MovieMedia videos={videos} onSelectTrailer={setSelectedTrailer} />}
             {activeTab === 'Related' && (
               similar && similar.length > 0 ? (
                 <div className="grid grid-cols-3 gap-4">
@@ -178,6 +309,8 @@ const SingleMoviePage = () => {
           </div>
         </div>
       </div>
+
+      <TrailerModal video={selectedTrailer} onClose={() => setSelectedTrailer(null)} />
     </div>
   );
 };

@@ -3,10 +3,12 @@ import CardList from '../components/CardList'
 import Footer from '../components/navigations/Footer'
 import { useUpcomingMovies } from '../hooks/useUpcomingMovies'
 
+// Picked once per page load so the hero stays stable across re-renders
+const heroSeed = Math.random()
+
 const HomePage = () => {
   const { movies } = useUpcomingMovies("upcoming")
-  const randomMovie = Math.floor(Math.random() * movies.length)
-  const heroMovie = movies[randomMovie]
+  const heroMovie = movies[Math.floor(heroSeed * movies.length)]
 
   return (
     <div className=' bg-[#F5F2F2]'>
@@ -17,7 +19,7 @@ const HomePage = () => {
           rating={heroMovie?.vote_average?.toFixed(1)}
           year={heroMovie?.release_date?.split('-')[0]}
         />
-        <CardList title="Coming Soon" Category1="upcoming"/>
+        <CardList title="Coming Soon" Category1="upcoming" heading="Upcoming Movies"/>
         
         <Footer/>
     </div>

@@ -20,11 +20,13 @@ const HeroSection = ({
   return (
     <div className="mt-17 relative w-full min-h-[520px] lg:min-h-[620px] bg-[#0d1b3e] overflow-hidden flex items-end">
       {/* Background Image */}
-      <img
-        src={heroImage}
-        alt="hero-section"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
+      {heroImage && (
+        <img
+          src={heroImage}
+          alt="hero-section"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
       {/* Left-to-right dark overlay */}
       <div
         className="absolute inset-0"

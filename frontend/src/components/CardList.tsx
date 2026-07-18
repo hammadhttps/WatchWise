@@ -7,9 +7,11 @@ import { Link } from 'react-router-dom';
 interface CardListProps {
   title: string;
   Category1: string;
+  heading?: string;
+  badge?: string;
 }
-const CardList = ({ title, Category1 }: CardListProps) => {
-  
+const CardList = ({ title, Category1, heading, badge }: CardListProps) => {
+
   const { movies, page, totalPages, setPage } = useUpcomingMovies(Category1);
   return (
     <section className="px-[4%] py-12 bg-[#0d1b3e]">
@@ -19,14 +21,14 @@ const CardList = ({ title, Category1 }: CardListProps) => {
             <div className="w-6 h-[2px] bg-[#6ea8fe] rounded-full" />
             <span className="text-[11px] font-semibold tracking-[2px] uppercase text-[#6ea8fe]">{title}</span>
           </div>
-          <h2 className="text-[26px] font-bold text-white tracking-[-0.3px] leading-[1.1]">{Category1}</h2>
+          <h2 className="text-[26px] font-bold text-white tracking-[-0.3px] leading-[1.1]">{heading ?? Category1}</h2>
         </div>
        
       </div>
       <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
         {movies.map(movie => (
-          <Link to={`/movie/${movie.id}`}>
-          <MovieCard key={movie.id} movie={movie} />
+          <Link key={movie.id} to={`/movie/${movie.id}`}>
+            <MovieCard movie={movie} badge={badge} />
           </Link>
         ))}
       </div>
