@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { UserPlus, Eye, EyeOff, Lock, Clock, Users, Loader2, ChevronDown, ShieldCheck } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import { SECURITY_QUESTIONS } from '../services/api';
+import { getSafeRedirect } from '../utils/safeRedirect';
 
 const getStrength = (pw: string) => {
   let score = 0;
@@ -45,6 +46,9 @@ const SignUp = () => {
 
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = getSafeRedirect(searchParams.get('redirect'));
+  const signinHref = redirect !== '/' ? `/sign?redirect=${encodeURIComponent(redirect)}` : '/sign';
 
   const strength = getStrength(form.password);
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, [k]: e.target.value }));
@@ -121,7 +125,7 @@ const SignUp = () => {
           ? securityQuestions.map(sq => ({ question: sq.question, answer: sq.answer }))
           : []
       });
-      navigate('/');
+      navigate(redirect, { replace: true });
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response?: { data?: { message?: string } } };
@@ -163,7 +167,7 @@ const SignUp = () => {
             <h1 className="text-[22px] font-bold text-white mb-1.5">Create your account</h1>
             <p className="text-[13.5px] text-white/45">
               Already a member?{' '}
-              <Link to="/sign" className="text-[#6ea8fe] font-semibold hover:underline">
+              <Link to={signinHref} className="text-[#6ea8fe] font-semibold hover:underline">
                 Sign in
               </Link>
             </p>

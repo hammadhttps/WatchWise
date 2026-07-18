@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { LogIn, Eye, EyeOff, Star, Bookmark, Bell, Loader2 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
+import { getSafeRedirect } from '../utils/safeRedirect';
 
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,6 +14,9 @@ const SignIn = () => {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = getSafeRedirect(searchParams.get('redirect'));
+  const signupHref = redirect !== '/' ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +25,7 @@ const SignIn = () => {
 
     try {
       await login(email, password, remember);
-      navigate('/');
+      navigate(redirect, { replace: true });
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response?: { data?: { message?: string } } };
@@ -63,7 +67,7 @@ const SignIn = () => {
             <h1 className="text-[22px] font-bold text-white mb-1.5">Welcome back</h1>
             <p className="text-[13.5px] text-white/45">
               New here?{' '}
-              <Link to="/signup" className="text-[#6ea8fe] font-semibold hover:underline">
+              <Link to={signupHref} className="text-[#6ea8fe] font-semibold hover:underline">
                 Create an account
               </Link>
             </p>

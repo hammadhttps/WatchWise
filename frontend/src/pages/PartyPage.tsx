@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { io, Socket } from 'socket.io-client';
 import { Users, Send, LinkIcon, Check, ArrowLeft, PartyPopper, Film } from 'lucide-react';
@@ -18,6 +18,7 @@ const PartyPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [members, setMembers] = useState<string[]>([]);
@@ -37,8 +38,11 @@ const PartyPage = () => {
   const party = data?.party;
 
   useEffect(() => {
-    if (!loading && !user) navigate('/sign');
-  }, [user, loading, navigate]);
+    if (!loading && !user) {
+      const invitePath = `${location.pathname}${location.search}${location.hash}`;
+      navigate(`/sign?redirect=${encodeURIComponent(invitePath)}`, { replace: true });
+    }
+  }, [user, loading, navigate, location]);
 
   useEffect(() => {
     if (!user || !party || !id) return;
