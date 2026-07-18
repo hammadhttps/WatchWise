@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { UserPlus, Eye, EyeOff, Lock, Clock, Users, Loader2, ChevronDown } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, Lock, Clock, Users, Loader2, ChevronDown, ShieldCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import useAuth from '../context/AuthContext';
+import useAuth from '../hooks/useAuth';
 import { SECURITY_QUESTIONS } from '../services/api';
 
 const getStrength = (pw: string) => {
@@ -38,6 +38,7 @@ const SignUp = () => {
     { question: '', answer: '' }
   ]);
   const [showQuestionDropdowns, setShowQuestionDropdowns] = useState<boolean[]>([false, false, false]);
+  const [addQuestions, setAddQuestions] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -94,16 +95,18 @@ const SignUp = () => {
       return;
     }
 
-    const emptyQuestion = securityQuestions.some(sq => !sq.question || !sq.answer);
-    if (emptyQuestion) {
-      setError('Please select and answer all 3 security questions');
-      return;
-    }
+    if (addQuestions) {
+      const emptyQuestion = securityQuestions.some(sq => !sq.question || !sq.answer);
+      if (emptyQuestion) {
+        setError('Please select and answer all 3 security questions, or turn them off');
+        return;
+      }
 
-    const uniqueQuestions = new Set(securityQuestions.map(sq => sq.question));
-    if (uniqueQuestions.size !== 3) {
-      setError('Please select 3 different security questions');
-      return;
+      const uniqueQuestions = new Set(securityQuestions.map(sq => sq.question));
+      if (uniqueQuestions.size !== 3) {
+        setError('Please select 3 different security questions');
+        return;
+      }
     }
 
     setLoading(true);
@@ -114,7 +117,9 @@ const SignUp = () => {
         lastName: form.lastName,
         email: form.email,
         password: form.password,
-        securityQuestions: securityQuestions.map(sq => ({ question: sq.question, answer: sq.answer }))
+        securityQuestions: addQuestions
+          ? securityQuestions.map(sq => ({ question: sq.question, answer: sq.answer }))
+          : []
       });
       navigate('/');
     } catch (err: unknown) {
@@ -233,6 +238,32 @@ const SignUp = () => {
               )}
             </div>
 
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={() => setAddQuestions(!addQuestions)}
+                className="w-full flex items-center justify-between gap-3 px-3.5 py-3 bg-white/[0.04] border border-white/10 rounded-lg cursor-pointer hover:border-[#6ea8fe]/40 transition-all text-left"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-[7px] flex-shrink-0 bg-[#6ea8fe]/10 border border-[#6ea8fe]/20 flex items-center justify-center">
+                    <ShieldCheck size={15} color="#6ea8fe" />
+                  </div>
+                  <div>
+                    <p className="text-[13.5px] font-semibold text-white">
+                      Security questions <span className="text-white/35 font-medium">(optional)</span>
+                    </p>
+                    <p className="text-[11.5px] text-white/40 mt-0.5">
+                      Lets you reset your password if you ever forget it
+                    </p>
+                  </div>
+                </div>
+                <div className={`relative w-[38px] h-[22px] rounded-full flex-shrink-0 transition-colors duration-200 ${addQuestions ? 'bg-[#6ea8fe]' : 'bg-white/15'}`}>
+                  <div className={`absolute top-[3px] w-4 h-4 rounded-full bg-white transition-all duration-200 ${addQuestions ? 'left-[18px]' : 'left-[3px]'}`} />
+                </div>
+              </button>
+            </div>
+
+            {addQuestions && (<>
             <div className="mb-4">
               <label className={labelClass}>Security Question 1</label>
               <div className="relative">
@@ -364,6 +395,7 @@ const SignUp = () => {
                 />
               )}
             </div>
+            </>)}
 
             {error && (
               <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">

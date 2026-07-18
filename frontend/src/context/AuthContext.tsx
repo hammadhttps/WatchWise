@@ -1,29 +1,8 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { authAPI } from '../services/api';
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string, remember: boolean) => Promise<void>;
-  signup: (data: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-    securityQuestions: { question: string; answer: string }[];
-  }) => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext } from './auth';
+import type { User } from './auth';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -53,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     lastName: string;
     email: string;
     password: string;
-    securityQuestions: { question: string; answer: string }[];
+    securityQuestions?: { question: string; answer: string }[];
   }) => {
     const response = await authAPI.signup(data);
     setUser(response.user);
@@ -70,13 +49,3 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
-
-const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export default useAuth;

@@ -12,7 +12,6 @@ const VerifyQuestions = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [answers, setAnswers] = useState<{ question: string; answer: string }[]>([]);
-  const [correctCount, setCorrectCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [locked, setLocked] = useState(false);
@@ -219,7 +218,7 @@ const VerifyQuestions = () => {
               </div>
             )}
 
-            {correctCount >= 2 && (
+            {answers.length >= 2 && (
               <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
                 <p className="text-[13px] text-green-400 text-center">
                   Verification successful! Redirecting...

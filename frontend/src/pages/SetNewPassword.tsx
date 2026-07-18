@@ -60,7 +60,7 @@ const SetNewPassword = () => {
     setLoading(true);
 
     try {
-      await authAPI.resetPassword(email, password);
+      await authAPI.resetPassword(password);
       setSuccess(true);
       
       setTimeout(() => {

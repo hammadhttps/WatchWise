@@ -10,6 +10,10 @@ const generateToken = (userId, remember = false) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn });
 };
 
+const generateResetToken = (userId) => {
+  return jwt.sign({ userId, purpose: 'password-reset' }, process.env.JWT_SECRET, { expiresIn: '10m' });
+};
+
 const setCookie = (res, token, remember = false) => {
   const maxAge = remember 
     ? 7 * 24 * 60 * 60 * 1000 
@@ -37,12 +41,13 @@ router.post('/signup', async (req, res) => {
     const { firstName, lastName, email, password, securityQuestions } = req.body;
    // console.log(req.body);
 
-    if (!firstName || !lastName || !email || !password || !securityQuestions) {
-      return res.status(400).json({ message: 'All fields are required' });
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ message: 'Name, email and password are required' });
     }
 
-    if (securityQuestions.length !== 3) {
-      return res.status(400).json({ message: 'Exactly 3 security questions are required' });
+    const hasQuestions = Array.isArray(securityQuestions) && securityQuestions.length > 0;
+    if (hasQuestions && securityQuestions.length !== 3) {
+      return res.status(400).json({ message: 'If you set security questions, all 3 are required' });
     }
 
     const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -55,7 +60,7 @@ router.post('/signup', async (req, res) => {
       lastName,
       email,
       password,
-      securityQuestions
+      securityQuestions: hasQuestions ? securityQuestions : []
     });
 
     await user.save();
@@ -67,7 +72,8 @@ router.post('/signup', async (req, res) => {
       id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
-      email: user.email
+      email: user.email,
+      createdAt: user.createdAt
     };
 
     res.status(201).json({ user: userResponse });
@@ -86,7 +92,6 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password, remember } = req.body;
-    console.log(req.body);
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
@@ -94,13 +99,11 @@ router.post('/login', async (req, res) => {
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      console.log("email not found");
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      console.log("password not matched");
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -111,12 +114,13 @@ router.post('/login', async (req, res) => {
       id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
-      email: user.email
+      email: user.email,
+      createdAt: user.createdAt
     };
 
     res.json({ user: userResponse });
   } catch (error) {
-    console.log("This is the error");
+    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -127,7 +131,15 @@ router.post('/logout', (req, res) => {
 });
 
 router.get('/me', auth, async (req, res) => {
-  res.json({ user: req.user });
+  res.json({
+    user: {
+      id: req.user._id,
+      firstName: req.user.firstName,
+      lastName: req.user.lastName,
+      email: req.user.email,
+      createdAt: req.user.createdAt
+    }
+  });
 });
 
 router.post('/forgot-password', async (req, res) => {
@@ -149,15 +161,22 @@ router.post('/forgot-password', async (req, res) => {
 
     if (user.isResetLocked()) {
       const remaining = Math.ceil((user.resetLockUntil - new Date()) / 60000);
-      return res.status(429).json({ 
+      return res.status(429).json({
         message: `Account locked. Try again in ${remaining} minutes`,
         locked: true,
         remainingMinutes: remaining
       });
     }
 
+    if (!user.securityQuestions || user.securityQuestions.length === 0) {
+      return res.status(400).json({
+        message: 'This account has no security questions set up, so the password cannot be reset this way',
+        noQuestions: true
+      });
+    }
+
     const questions = user.getSecurityQuestionTexts();
-    res.json({ 
+    res.json({
       message: 'Security questions retrieved',
       questions,
       email
@@ -176,9 +195,13 @@ router.post('/verify-questions', async (req, res) => {
     }
 
     const user = await User.findOne({ email: email.toLowerCase() });
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.securityQuestions || user.securityQuestions.length === 0) {
+      return res.status(400).json({ message: 'This account has no security questions set up' });
     }
 
     if (user.isResetLocked()) {
@@ -206,8 +229,17 @@ router.post('/verify-questions', async (req, res) => {
         resetAttempts: 0,
         resetLockUntil: null
       });
-      return res.json({ 
-        verified: true, 
+
+      const resetToken = generateResetToken(user._id);
+      res.cookie('resetToken', resetToken, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 10 * 60 * 1000
+      });
+
+      return res.json({
+        verified: true,
         message: 'Verification successful',
         email
       });
@@ -244,30 +276,53 @@ router.post('/verify-questions', async (req, res) => {
 
 router.post('/reset-password', async (req, res) => {
   try {
-    const { email, newPassword } = req.body;
+    const { newPassword } = req.body;
+    const resetToken = req.cookies.resetToken;
 
-    if (!email || !newPassword) {
-      return res.status(400).json({ message: 'Email and new password are required' });
+    if (!resetToken) {
+      return res.status(401).json({ message: 'Please verify your security questions first' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    } catch {
+      return res.status(401).json({ message: 'Reset session expired. Please verify your security questions again' });
+    }
+
+    if (decoded.purpose !== 'password-reset') {
+      return res.status(401).json({ message: 'Invalid reset token' });
+    }
+
+    if (!newPassword) {
+      return res.status(400).json({ message: 'New password is required' });
     }
 
     if (newPassword.length < 8) {
       return res.status(400).json({ message: 'Password must be at least 8 characters' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
-    
+    const user = await User.findById(decoded.userId);
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    await User.findByIdAndUpdate(user._id, {
-      password: newPassword,
-      resetAttempts: 0,
-      resetLockUntil: null
+    user.password = newPassword;
+    user.resetAttempts = 0;
+    user.resetLockUntil = null;
+    await user.save();
+
+    res.cookie('resetToken', '', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 0
     });
 
     res.json({ message: 'Password reset successfully' });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -284,15 +339,22 @@ router.put('/security-questions', auth, async (req, res) => {
       return res.status(400).json({ message: 'Exactly 3 security questions are required' });
     }
 
-    const isMatch = await req.user.comparePassword(currentPassword);
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid password' });
     }
 
-    await User.findByIdAndUpdate(req.user._id, { securityQuestions });
+    user.securityQuestions = securityQuestions;
+    await user.save();
 
     res.json({ message: 'Security questions updated successfully' });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
