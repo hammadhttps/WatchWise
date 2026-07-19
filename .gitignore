@@ -2,3 +2,5 @@ node_modules
 /build
 .env
 /.claude
+
+# refresh contributor cache
