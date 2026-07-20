@@ -1,8 +1,36 @@
-# WatchWise
+<div align="center">
+
+<img src="https://img.shields.io/badge/WatchWise-Movie%20Discovery-6d28d9?style=for-the-badge" alt="WatchWise" />
+
+<h1>WatchWise</h1>
+
+<p>
+  <img src="https://img.shields.io/badge/Stack-MERN-0ea5e9?style=flat-square" alt="MERN" />
+  <img src="https://img.shields.io/badge/AI-Google%20Gemini-7c3aed?style=flat-square" alt="Gemini" />
+  <img src="https://img.shields.io/badge/Realtime-Socket.io-059669?style=flat-square" alt="Socket.io" />
+  <img src="https://img.shields.io/badge/Movies-TMDB-f59e0b?style=flat-square" alt="TMDB" />
+</p>
+
+<p align="center">
+  <b>A full-stack movie discovery platform where taste meets conversation.</b><br/>
+  Discover, like, save, and get AI-curated recommendations &mdash; then watch together in real time.
+</p>
+
+</div>
+
+---
 
 WatchWise is a full-stack movie discovery platform built on the MERN stack (MongoDB, Express, React, Node.js). It combines TMDB-powered browsing with a personal taste engine: users like and save movies, get AI-generated recommendations from Google Gemini based on their actual viewing taste, write community reviews, and chat about movies with friends in real-time watch party rooms.
 
 ## Features
+
+<div align="center">
+
+| Secure Auth | Smart Discovery | AI Movie Match | Live Watch Parties |
+| :---: | :---: | :---: | :---: |
+| JWT + bcrypt, security questions | TMDB browse, search & detail pages | Gemini recommendations from your taste | Real-time rooms over Socket.io |
+
+</div>
 
 ### Authentication
 
