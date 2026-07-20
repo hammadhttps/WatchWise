@@ -86,12 +86,19 @@ WatchWise is a full-stack movie discovery platform built on the MERN stack (Mong
 
 ## Tech stack
 
+<div align="center">
+
 | Layer | Technology |
 | --- | --- |
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, React Router 7, TanStack Query 5, Socket.io client, Axios, Lucide icons |
-| Backend | Node.js, Express 5, Socket.io, JSON Web Tokens, bcryptjs, cookie-parser |
-| Database | MongoDB with Mongoose 9 |
-| External APIs | TMDB (movie data), Google Gemini (recommendations, taste analysis) |
+| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS 4, React Router 7, TanStack Query 5, Socket.io client, Axios, Lucide icons |
+| **Backend** | Node.js, Express 5, Socket.io, JSON Web Tokens, bcryptjs, cookie-parser |
+| **Database** | MongoDB with Mongoose 9 |
+| **External APIs** | TMDB (movie data), Google Gemini (recommendations, taste analysis) |
+
+</div>
+
+> [!NOTE]
+> WatchWise pairs a modern React frontend with a secure Express backend. Every authenticated route is protected by a JWT cookie, and AI features are gated so the Gemini key is never exposed to the browser.
 
 ## Project structure
 
@@ -203,6 +210,20 @@ All routes are prefixed with `/api`. Routes marked "auth" require the JWT cookie
 | GET | /quotes | - | A quote for a movie title |
 
 Socket.io events: `party:join`, `party:message` (client to server); `party:state`, `party:history`, `party:message`, `party:error` (server to client).
+
+## Why WatchWise
+
+<div align="center">
+
+**Built for people who finish a great film and immediately want the next one.**
+
+</div>
+
+WatchWise is more than a catalog. It learns what you enjoy, explains its picks, and turns watching into something social &mdash; whether that's a quiet evening with a tailored recommendation or a live room with friends debating the ending.
+
+- Personalized by design: likes and watchlist drive every AI suggestion.
+- Honest by default: community scores sit side by side with critic scores.
+- Social by nature: real-time rooms keep the conversation going after the credits roll.
 
 ## Notes
 
